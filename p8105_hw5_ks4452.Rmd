@@ -58,6 +58,63 @@ The probability that at least two people share a birthday increases as the group
 
 # Problem 2
 
+```{r}
+study_df = 
+  tibble(
+    files = list.files("data/"),
+    path = str_c("data/", files)
+  ) |> 
+  mutate(
+    data = map(path, read_csv)
+  )
+```
 
+```{r}
+study_df = 
+  study_df |> 
+  unnest(cols = "data")
+```
+
+```{r}
+study_tidy = 
+  study_df |> 
+  mutate(
+    files = str_replace(files, ".csv", "")
+  ) |> 
+  separate(
+    files,
+    into = c("arm", "subject_id"),
+    sep = "_"
+  ) |> 
+  mutate(
+    arm = str_replace(arm, "con", "control"),
+    arm = str_replace(arm, "exp", "experimental")
+  ) |> 
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    values_to = "observation",
+    names_prefix = "week_"
+  ) |> 
+  mutate(
+    week = as.numeric(week)
+  ) |> 
+  select(arm, subject_id, week, observation)
+```
+
+```{r}
+study_tidy |> 
+  ggplot(aes(x = week, y = observation, group = subject_id, color = arm)) +
+  geom_point() +
+  geom_path() +
+  facet_grid(~arm) +
+  labs(
+    title = "Observations Over Time by Study Arm",
+    x = "Week",
+    y = "Observation"
+  )
+```
+
+The control group shows relatively little change in observations over time and the values fluctuate around a similar range for the eight weeks. The experimental group generally shows an upward trend and the observations increase as the study progresses. This suggests that the experimental treatment might be associated with an increase in the measured outcome over time.
 
 # Problem 3
